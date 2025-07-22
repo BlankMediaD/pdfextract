@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Extractor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Data Extractor</h1>
+    <textarea id="data" placeholder="Paste your data here..."></textarea>
+    <button id="parse">Parse Data</button>
+    <button id="export">Export to XLSX</button>
+    <table id="output">
+        <thead>
+            <tr>
+                <th>Entry No.</th>
+                <th>Company Name</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Website</th>
+                <th>Representatives</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
