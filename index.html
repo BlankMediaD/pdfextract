@@ -1,111 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Manufacturers Directory</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    textarea, table { width: 100%; margin-bottom: 1em; }
-    textarea { height: 200px; }
-    table { border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background: #f4f4f4; }
-    #exportBtn { padding: 8px 16px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Extractor</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<h2>Paste Raw Directory Text</h2>
-<textarea id="rawInput" placeholder="Paste the directory block here…"></textarea>
-<button id="renderBtn">Render Table</button>
-<button id="exportBtn" disabled>Export to XLSX</button>
-
-<h2>Parsed Directory</h2>
-<div id="tableContainer"></div>
-
-<script>
-(function(){
-  const renderBtn = document.getElementById('renderBtn');
-  const exportBtn = document.getElementById('exportBtn');
-  const rawInput = document.getElementById('rawInput');
-  const container = document.getElementById('tableContainer');
-
-  // Regex patterns
-  const entryRegex = /(\d+)\s+([A-Z0-9 &\-\.]+)\s+(.+?)\s+Ph\s+([\d\/,\s]+)\s+Email\s+([\w@,.\s\-]+)\s+(?:Web\s+([\w@\/\.\-]+)\s*)?Rep\.\s+(.+)/gs;
-  const repRegex = /([A-Za-z.\- ]+?)\s*-\s*([A-Za-z &]+)\s*([\d\/\s]+)/g;
-
-  function parseEntries(text) {
-    const entries = [];
-    let m;
-    while ((m = entryRegex.exec(text)) !== null) {
-      const [_, id, name, address, phones, emails, website, repsRaw] = m;
-      // Split emails
-      const emailList = emails.split(/[\s,]+/).filter(e=>e.includes('@')).join(', ');
-      // Process reps
-      const reps = [];
-      let r;
-      while ((r = repRegex.exec(repsRaw)) !== null) {
-        reps.push({ name: r[1].trim(), designation: r[2].trim(), phone: r[3].trim() });
-      }
-      entries.push({
-        id, name: name.trim(),
-        address: address.replace(/\s+/g,' '),
-        phones: phones.replace(/\s+/g,' '),
-        emails: emailList,
-        website: website||'—',
-        reps
-      });
-    }
-    return entries;
-  }
-
-  function renderTable(data) {
-    if (!data.length) {
-      container.innerHTML = '<p>No entries parsed. Check your input format.</p>';
-      exportBtn.disabled = true;
-      return;
-    }
-    // Build table header
-    let maxReps = Math.max(...data.map(e=>e.reps.length));
-    const cols = [
-      'S. No.','Company Name','Address','Phone(s)','Email(s)','Website'
-    ];
-    for (let i=1; i<=maxReps; i++){
-      cols.push(`Rep ${i} Name`, `Rep ${i} Designation`, `Rep ${i} Phone`);
-    }
-    let html = '<table><thead><tr>' + cols.map(c=>`<th>${c}</th>`).join('') + '</tr></thead><tbody>';
-    data.forEach(e=>{
-      let row = [
-        e.id, e.name, e.address, e.phones, e.emails, e.website
-      ];
-      for (let i=0; i<maxReps; i++){
-        const r = e.reps[i]||{name:'—',designation:'—',phone:'—'};
-        row.push(r.name, r.designation, r.phone);
-      }
-      html += '<tr>' + row.map(cell=>`<td>${cell}</td>`).join('') + '</tr>';
-    });
-    html += '</tbody></table>';
-    container.innerHTML = html;
-    exportBtn.disabled = false;
-  }
-
-  function exportToXLSX(data) {
-    // convert HTML table to workbook
-    const tbl = container.querySelector('table');
-    const wb = XLSX.utils.table_to_book(tbl, {sheet:'Directory'});
-    XLSX.writeFile(wb, 'manufacturers_directory.xlsx');
-  }
-
-  renderBtn.addEventListener('click', ()=>{
-    const parsed = parseEntries(rawInput.value);
-    renderTable(parsed);
-  });
-  exportBtn.addEventListener('click', ()=> {
-    exportToXLSX();
-  });
-})();
-</script>
-
+    <h1>Data Extractor</h1>
+    <textarea id="data" placeholder="Paste your data here..."></textarea>
+    <button id="parse">Parse Data</button>
+    <button id="export">Export to XLSX</button>
+    <table id="output">
+        <thead>
+            <tr>
+                <th>Entry No.</th>
+                <th>Company Name</th>
+                <th>Address</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Website</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
