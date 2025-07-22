@@ -1,62 +1,20 @@
 document.getElementById('parse').addEventListener('click', () => {
     const data = document.getElementById('data').value;
-    const regex = /^\d+\s/m;
-    const entryNumbers = data.match(new RegExp(regex.source, 'g')).map(s => s.trim());
-    const entries = data.split(regex).filter(Boolean);
-    const output = document.getElementById('output').getElementsByTagName('tbody')[0];
-    const header = document.getElementById('output').getElementsByTagName('thead')[0].getElementsByTagName('tr')[0];
-    output.innerHTML = '';
-    header.innerHTML = '<th>Entry No.</th><th>Company Name</th><th>Address</th><th>Phone</th><th>Email</th><th>Website</th><th>Description</th>';
+    const regex = /^(\d+)\s(.*?)\n(.*?)(?:Ph (.*?))?(?:Email (.*?))?(?:Web (.*?))?(?:Rep\.(.*?))?(?:NB (.*?))(?=\n^\d+\s|$(?![\r\n]))/gsm;
 
+    let match;
+    const parsedData = [];
     let maxReps = 0;
 
-    const parsedData = entries.map((entry, i) => {
-        const lines = entry.trim().split('\n');
-        let companyName = lines[0].trim();
-        let address = '';
-        let phone = '';
-        let email = '';
-        let website = '';
-        let representatives = [];
-        let description = '';
-
-        let j = 1;
-        while (j < lines.length && !lines[j].startsWith('Ph ') && !lines[j].startsWith('Email ') && !lines[j].startsWith('Web ') && !lines[j].startsWith('Rep.')) {
-            address += lines[j].trim() + ' ';
-            j++;
-        }
-
-        let repStarted = false;
-        while (j < lines.length) {
-            const line = lines[j].trim();
-            if (line.startsWith('Ph ')) {
-                phone += line.substring(3).trim() + ' ';
-            } else if (line.startsWith('Email ')) {
-                email += line.substring(6).trim() + ' ';
-            } else if (line.startsWith('Web ')) {
-                website += line.substring(4).trim() + ' ';
-            } else if (line.startsWith('Rep.')) {
-                repStarted = true;
-                const repLine = line.substring(5).trim();
-                representatives.push(repLine);
-            } else if (line.startsWith('NB ')) {
-                repStarted = false;
-                description += line.substring(3).trim() + ' ';
-            } else if (repStarted) {
-                representatives.push(line);
-            } else {
-                description += line + ' ';
-            }
-            j++;
-        }
-
-        const parsedReps = representatives.map(r => {
+    while ((match = regex.exec(data)) !== null) {
+        const reps = match[7] ? match[7].trim().split('\n').map(r => r.trim()) : [];
+        const parsedReps = reps.map(r => {
             const parts = r.split(' - ');
             const name = parts[0];
             const rest = parts.length > 1 ? parts[1] : '';
-            const match = rest.match(/(.*?)(\s\d+.*)?$/);
-            const designation = match ? match[1].trim() : rest;
-            const number = match && match[2] ? match[2].trim() : '';
+            const desMatch = rest.match(/(.*?)(\s\d+.*)?$/);
+            const designation = desMatch ? desMatch[1].trim() : rest;
+            const number = desMatch && desMatch[2] ? desMatch[2].trim() : '';
             return { name, designation, number };
         });
 
@@ -64,17 +22,22 @@ document.getElementById('parse').addEventListener('click', () => {
             maxReps = parsedReps.length;
         }
 
-        return {
-            entryNum: entryNumbers[i],
-            companyName,
-            address: address.trim(),
-            phone: phone.trim(),
-            email: email.trim(),
-            website: website.trim(),
+        parsedData.push({
+            entryNum: match[1],
+            companyName: match[2],
+            address: match[3].replace(/\n/g, ' ').trim(),
+            phone: match[4] ? match[4].replace(/\n/g, '').trim() : '',
+            email: match[5] ? match[5].replace(/\n/g, '').trim() : '',
+            website: match[6] ? match[6].replace(/\n/g, '').trim() : '',
             representatives: parsedReps,
-            description: description.trim(),
-        };
-    });
+            description: match[8] ? match[8].replace(/\n/g, ' ').trim() : ''
+        });
+    }
+
+    const output = document.getElementById('output').getElementsByTagName('tbody')[0];
+    const header = document.getElementById('output').getElementsByTagName('thead')[0].getElementsByTagName('tr')[0];
+    output.innerHTML = '';
+    header.innerHTML = '<th>Entry No.</th><th>Company Name</th><th>Address</th><th>Phone</th><th>Email</th><th>Website</th><th>Description</th>';
 
     for (let i = 1; i <= maxReps; i++) {
         header.innerHTML += `<th>Rep ${i} Name</th><th>Rep ${i} Designation</th><th>Rep ${i} Number</th>`;
@@ -89,11 +52,12 @@ document.getElementById('parse').addEventListener('click', () => {
         row.insertCell().textContent = data.email;
         row.insertCell().textContent = data.website;
         row.insertCell().textContent = data.description;
-        data.representatives.forEach(rep => {
-            row.insertCell().textContent = rep.name;
-            row.insertCell().textContent = rep.designation;
-            row.insertCell().textContent = rep.number;
-        });
+        for (let i = 0; i < maxReps; i++) {
+            const rep = data.representatives[i];
+            row.insertCell().textContent = rep ? rep.name : '';
+            row.insertCell().textContent = rep ? rep.designation : '';
+            row.insertCell().textContent = rep ? rep.number : '';
+        }
     });
 });
 
